@@ -1,1 +1,13 @@
 project_id = "zdmymcefzmbckohzupgt"
+
+[functions.create-booking]
+verify_jwt = true
+
+[functions.update-booking-status]
+verify_jwt = true
+
+[functions.send-notification]
+verify_jwt = true
+
+[functions.search-freelancers]
+verify_jwt = false
