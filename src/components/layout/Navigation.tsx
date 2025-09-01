@@ -47,8 +47,12 @@ export const Navigation = () => {
             </Badge>
           </Button>
           
-          <Button variant="outline">Sign In</Button>
-          <Button variant="hero">Join as Freelancer</Button>
+          <Button variant="outline" onClick={() => window.location.href = '/auth'}>
+            Sign In
+          </Button>
+          <Button onClick={() => window.location.href = '/auth'}>
+            Join as Freelancer
+          </Button>
         </div>
 
         <Button
@@ -74,8 +78,12 @@ export const Navigation = () => {
               How it Works
             </a>
             <div className="pt-3 space-y-2">
-              <Button variant="outline" className="w-full">Sign In</Button>
-              <Button variant="hero" className="w-full">Join as Freelancer</Button>
+              <Button variant="outline" className="w-full" onClick={() => window.location.href = '/auth'}>
+                Sign In
+              </Button>
+              <Button className="w-full" onClick={() => window.location.href = '/auth'}>
+                Join as Freelancer
+              </Button>
             </div>
           </div>
         </div>

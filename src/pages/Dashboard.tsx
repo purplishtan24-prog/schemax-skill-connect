@@ -1,0 +1,392 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  User, 
+  Calendar, 
+  DollarSign, 
+  Star, 
+  Bell,
+  Settings,
+  LogOut,
+  Plus,
+  Search,
+  Filter
+} from "lucide-react";
+import { Navigation } from "@/components/layout/Navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface Profile {
+  id: string;
+  display_name: string;
+  bio: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  role: 'client' | 'freelancer';
+  hourly_rate: number | null;
+  is_public: boolean;
+}
+
+export default function Dashboard() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+
+      await loadProfile(session.user.id);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate('/auth');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const loadProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setProfile(data);
+      } else {
+        // Profile doesn't exist, redirect to setup
+        navigate('/profile-setup');
+        return;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error loading profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
+      
+      // Clear all auth state
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      window.location.href = '/auth';
+    } catch (error: any) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="lg:w-80">
+            <Card className="shadow-card border-card-border">
+              <CardHeader className="text-center pb-4">
+                <Avatar className="w-20 h-20 mx-auto mb-4">
+                  <AvatarImage src={profile.avatar_url || ""} />
+                  <AvatarFallback className="text-lg bg-primary text-primary-foreground">
+                    {profile.display_name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <CardTitle className="text-xl">{profile.display_name}</CardTitle>
+                <CardDescription className="flex items-center justify-center gap-2">
+                  <Badge variant={profile.role === 'freelancer' ? 'default' : 'secondary'}>
+                    {profile.role === 'freelancer' ? 'Freelancer' : 'Client'}
+                  </Badge>
+                  {profile.is_public && <Badge variant="outline">Public Profile</Badge>}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {profile.location && (
+                  <div className="text-sm text-muted-foreground">
+                    📍 {profile.location}
+                  </div>
+                )}
+                {profile.hourly_rate && (
+                  <div className="text-sm">
+                    💰 ${profile.hourly_rate}/hour
+                  </div>
+                )}
+                {profile.bio && (
+                  <div className="text-sm text-muted-foreground">
+                    {profile.bio}
+                  </div>
+                )}
+                
+                <div className="pt-4 space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => navigate('/profile')}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">
+                Welcome back, {profile.display_name}!
+              </h1>
+              <p className="text-muted-foreground">
+                {profile.role === 'freelancer' 
+                  ? "Manage your services, bookings, and grow your business."
+                  : "Find talented freelancers and manage your projects."
+                }
+              </p>
+            </div>
+
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="bookings">Bookings</TabsTrigger>
+                <TabsTrigger value="services">
+                  {profile.role === 'freelancer' ? 'My Services' : 'Browse'}
+                </TabsTrigger>
+                <TabsTrigger value="notifications">
+                  <Bell className="w-4 h-4 mr-1" />
+                  Notifications
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="shadow-card">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        {profile.role === 'freelancer' ? 'Active Bookings' : 'Hired Freelancers'}
+                      </CardTitle>
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">0</div>
+                      <p className="text-xs text-muted-foreground">No active bookings yet</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="shadow-card">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        {profile.role === 'freelancer' ? 'Earnings' : 'Spent'}
+                      </CardTitle>
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">$0</div>
+                      <p className="text-xs text-muted-foreground">
+                        {profile.role === 'freelancer' ? 'Total earnings' : 'Total spent'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="shadow-card">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Rating</CardTitle>
+                      <Star className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">-</div>
+                      <p className="text-xs text-muted-foreground">No reviews yet</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                    <CardDescription>Get started with SchemaX</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {profile.role === 'freelancer' ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          className="h-20 flex-col"
+                          onClick={() => navigate('/services/new')}
+                        >
+                          <Plus className="w-6 h-6 mb-2" />
+                          Create Service
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="h-20 flex-col"
+                          onClick={() => navigate('/availability')}
+                        >
+                          <Calendar className="w-6 h-6 mb-2" />
+                          Set Availability
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          className="h-20 flex-col"
+                          onClick={() => navigate('/search')}
+                        >
+                          <Search className="w-6 h-6 mb-2" />
+                          Find Freelancers
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="h-20 flex-col"
+                          onClick={() => navigate('/categories')}
+                        >
+                          <Filter className="w-6 h-6 mb-2" />
+                          Browse Categories
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="bookings" className="space-y-6">
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle>Recent Bookings</CardTitle>
+                    <CardDescription>
+                      {profile.role === 'freelancer' 
+                        ? "Manage your client bookings"
+                        : "Track your hired freelancers"
+                      }
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No bookings yet</p>
+                      <p className="text-sm">
+                        {profile.role === 'freelancer' 
+                          ? "Create services to start receiving bookings"
+                          : "Browse freelancers to make your first booking"
+                        }
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="services" className="space-y-6">
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle>
+                      {profile.role === 'freelancer' ? 'My Services' : 'Browse Services'}
+                    </CardTitle>
+                    <CardDescription>
+                      {profile.role === 'freelancer' 
+                        ? "Manage your service offerings"
+                        : "Find the perfect service for your needs"
+                      }
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Plus className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>
+                        {profile.role === 'freelancer' 
+                          ? "No services created yet"
+                          : "Start browsing services"
+                        }
+                      </p>
+                      <Button 
+                        className="mt-4"
+                        onClick={() => navigate(profile.role === 'freelancer' ? '/services/new' : '/search')}
+                      >
+                        {profile.role === 'freelancer' ? 'Create Your First Service' : 'Browse Freelancers'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="notifications" className="space-y-6">
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle>Notifications</CardTitle>
+                    <CardDescription>Stay updated with your latest activities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No notifications yet</p>
+                      <p className="text-sm">We'll notify you about important updates</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
