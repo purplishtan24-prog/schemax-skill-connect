@@ -75,15 +75,15 @@ export const Navigation = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-6">
-            <a href="#" className="text-sm font-medium hover:text-primary transition-colors">
+            <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
               Find Freelancers
-            </a>
-            <a href="#" className="text-sm font-medium hover:text-primary transition-colors">
+            </button>
+            <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
               Categories
-            </a>
-            <a href="#" className="text-sm font-medium hover:text-primary transition-colors">
+            </button>
+            <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} className="text-sm font-medium hover:text-primary transition-colors" role="link">
               How it Works
-            </a>
+            </button>
           </div>
         </div>
 
@@ -177,15 +177,15 @@ export const Navigation = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur">
           <div className="container py-4 space-y-3">
-            <a href="#" className="block text-sm font-medium hover:text-primary transition-colors">
+            <button onClick={() => navigate('/search')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
               Find Freelancers
-            </a>
-            <a href="#" className="block text-sm font-medium hover:text-primary transition-colors">
+            </button>
+            <button onClick={() => navigate('/search')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
               Categories
-            </a>
-            <a href="#" className="block text-sm font-medium hover:text-primary transition-colors">
+            </button>
+            <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
               How it Works
-            </a>
+            </button>
             <div className="pt-3 space-y-2">
               {user ? (
                 <>

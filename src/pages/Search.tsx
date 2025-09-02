@@ -51,6 +51,15 @@ export default function Search() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q') || '';
+    const loc = params.get('location') || '';
+    const min = params.get('min_rate');
+    const max = params.get('max_rate');
+    setSearchQuery(q);
+    setLocation(loc);
+    if (min) setMinRate([parseInt(min)]);
+    if (max) setMaxRate([parseInt(max)]);
     searchFreelancers();
   }, []);
 
@@ -65,7 +74,12 @@ export default function Search() {
       params.append('verified_only', 'false');
       params.append('limit', '20');
 
-      const { data, error } = await supabase.functions.invoke('search-freelancers', {
+      // Preserve category filter from URL if present
+      const current = new URLSearchParams(window.location.search);
+      const skills = current.get('skills');
+      if (skills) params.append('skills', skills);
+
+      const { data, error } = await supabase.functions.invoke(`search-freelancers?${params.toString()}`, {
         method: 'GET',
       });
 

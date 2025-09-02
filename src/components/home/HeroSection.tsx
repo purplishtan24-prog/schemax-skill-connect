@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Star, Users, CheckCircle } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { useNavigate } from "react-router-dom";
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative py-20 lg:py-32 overflow-hidden">
       {/* Background Elements */}
@@ -32,11 +34,11 @@ export const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="hero" size="lg" className="text-base px-8">
+              <Button variant="hero" size="lg" className="text-base px-8" onClick={() => navigate('/search')}>
                 <Search className="w-4 h-4 mr-2" />
                 Find Freelancers
               </Button>
-              <Button variant="outline" size="lg" className="text-base px-8">
+              <Button variant="outline" size="lg" className="text-base px-8" onClick={() => navigate('/auth')}>
                 Join as Freelancer
               </Button>
             </div>

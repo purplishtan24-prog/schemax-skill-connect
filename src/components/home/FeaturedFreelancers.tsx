@@ -5,6 +5,7 @@ import { Star, MapPin, Clock, Verified } from "lucide-react";
 import freelancer1 from "@/assets/freelancer-1.jpg";
 import freelancer2 from "@/assets/freelancer-2.jpg";
 import freelancer3 from "@/assets/freelancer-3.jpg";
+import { useNavigate } from "react-router-dom";
 
 const freelancers = [
   {
@@ -52,6 +53,7 @@ const freelancers = [
 ];
 
 export const FeaturedFreelancers = () => {
+  const navigate = useNavigate();
   return (
     <section className="py-20 bg-secondary/30">
       <div className="container">
@@ -136,7 +138,7 @@ export const FeaturedFreelancers = () => {
         </div>
 
         <div className="text-center mt-12">
-          <Button variant="outline" size="lg" className="px-8">
+          <Button variant="outline" size="lg" className="px-8" onClick={() => navigate('/search')}>
             View All Freelancers
           </Button>
         </div>
