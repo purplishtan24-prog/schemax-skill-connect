@@ -139,7 +139,8 @@ export default function Profile() {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.id}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      // Upload to user's folder as required by RLS policy
+      const filePath = `${profile.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
