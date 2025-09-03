@@ -75,6 +75,9 @@ export const Navigation = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-6">
+            <button onClick={() => navigate('/home')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+              Home
+            </button>
             <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
               Find Freelancers
             </button>
@@ -177,6 +180,9 @@ export const Navigation = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur">
           <div className="container py-4 space-y-3">
+            <button onClick={() => navigate('/home')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
+              Home
+            </button>
             <button onClick={() => navigate('/search')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
               Find Freelancers
             </button>
