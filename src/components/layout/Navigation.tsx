@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Bell, User, Menu, X, Settings, LogOut } from "lucide-react";
+import { Search, User, Menu, X, Settings, LogOut } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface Profile {
   id: string;
@@ -78,6 +79,9 @@ export const Navigation = () => {
             <button onClick={() => navigate('/home')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
               Home
             </button>
+            <button onClick={() => navigate('/services')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+              Services
+            </button>
             <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
               Find Freelancers
             </button>
@@ -93,12 +97,7 @@ export const Navigation = () => {
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-4 h-4" />
-                <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs bg-accent">
-                  0
-                </Badge>
-              </Button>
+              <NotificationBell />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -170,6 +169,9 @@ export const Navigation = () => {
           <div className="container py-4 space-y-3">
             <button onClick={() => navigate('/home')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
               Home
+            </button>
+            <button onClick={() => navigate('/services')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
+              Services
             </button>
             <button onClick={() => navigate('/search')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
               Find Freelancers
