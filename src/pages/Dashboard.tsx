@@ -21,6 +21,175 @@ import {
 import { Navigation } from "@/components/layout/Navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+interface Service {
+  id: string;
+  title: string;
+  description: string | null;
+  price_cents: number;
+  duration_minutes: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+// Services Tab Component
+function ServicesTab({ profile, navigate }: { profile: Profile; navigate: any }) {
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (profile?.role === 'freelancer') {
+      loadServices();
+    } else {
+      setLoading(false);
+    }
+  }, [profile]);
+
+  const loadServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('freelancer_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading services",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleServiceStatus = async (serviceId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ is_active: !currentStatus })
+        .eq('id', serviceId);
+
+      if (error) throw error;
+
+      setServices(services.map(service => 
+        service.id === serviceId 
+          ? { ...service, is_active: !currentStatus }
+          : service
+      ));
+
+      toast({
+        title: "Service updated",
+        description: `Service ${!currentStatus ? 'activated' : 'deactivated'} successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating service",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (profile.role === 'client') {
+    return (
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>Browse Services</CardTitle>
+          <CardDescription>Find the perfect service for your needs</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Start browsing services</p>
+            <Button 
+              className="mt-4"
+              onClick={() => navigate('/search')}
+            >
+              Browse Freelancers
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle>My Services</CardTitle>
+          <CardDescription>Manage your service offerings</CardDescription>
+        </div>
+        <Button onClick={() => navigate('/services/new')}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Service
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading services...</p>
+          </div>
+        ) : services.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Plus className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No services created yet</p>
+            <Button 
+              className="mt-4"
+              onClick={() => navigate('/services/new')}
+            >
+              Create Your First Service
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {services.map((service) => (
+              <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium">{service.title}</h3>
+                    <Badge variant={service.is_active ? 'default' : 'secondary'}>
+                      {service.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {service.description || 'No description'}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>${(service.price_cents / 100).toFixed(2)}</span>
+                    <span>{service.duration_minutes} minutes</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleServiceStatus(service.id, service.is_active)}
+                  >
+                    {service.is_active ? 'Deactivate' : 'Activate'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/services')}
+                  >
+                    Manage
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 interface Profile {
   id: string;
   display_name: string;
@@ -336,36 +505,7 @@ export default function Dashboard() {
               </TabsContent>
 
               <TabsContent value="services" className="space-y-6">
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle>
-                      {profile.role === 'freelancer' ? 'My Services' : 'Browse Services'}
-                    </CardTitle>
-                    <CardDescription>
-                      {profile.role === 'freelancer' 
-                        ? "Manage your service offerings"
-                        : "Find the perfect service for your needs"
-                      }
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Plus className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>
-                        {profile.role === 'freelancer' 
-                          ? "No services created yet"
-                          : "Start browsing services"
-                        }
-                      </p>
-                      <Button 
-                        className="mt-4"
-                        onClick={() => navigate(profile.role === 'freelancer' ? '/services/new' : '/search')}
-                      >
-                        {profile.role === 'freelancer' ? 'Create Your First Service' : 'Browse Freelancers'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ServicesTab profile={profile} navigate={navigate} />
               </TabsContent>
 
               <TabsContent value="notifications" className="space-y-6">
