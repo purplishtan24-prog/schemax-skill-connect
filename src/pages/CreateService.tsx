@@ -10,14 +10,19 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Navigation } from "@/components/layout/Navigation";
 import { ArrowLeft, DollarSign, Clock, FileText } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CreateService() {
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
     duration: '60',
+    category_id: '',
+    subcategory_id: '',
     is_active: true
   });
   const navigate = useNavigate();
@@ -49,13 +54,36 @@ export default function CreateService() {
       }
     };
 
+    const loadCategories = async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      setCategories(data || []);
+    };
+
     checkAuth();
+    loadCategories();
   }, [navigate, toast]);
+
+  const handleCategoryChange = async (categoryId: string) => {
+    setFormData({ ...formData, category_id: categoryId, subcategory_id: '' });
+    if (categoryId) {
+      const { data } = await supabase
+        .from('subcategories')
+        .select('*')
+        .eq('category_id', categoryId)
+        .order('name');
+      setSubcategories(data || []);
+    } else {
+      setSubcategories([]);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.price || !formData.duration) {
+    if (!formData.title || !formData.price || !formData.duration || !formData.category_id) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields.",
@@ -77,6 +105,8 @@ export default function CreateService() {
           description: formData.description || null,
           price_cents: Math.round(parseFloat(formData.price) * 100),
           duration_minutes: parseInt(formData.duration),
+          category_id: formData.category_id || null,
+          subcategory_id: formData.subcategory_id || null,
           is_active: formData.is_active
         });
 
@@ -151,9 +181,47 @@ export default function CreateService() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Select value={formData.category_id} onValueChange={handleCategoryChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="subcategory">Subcategory</Label>
+                    <Select 
+                      value={formData.subcategory_id} 
+                      onValueChange={(value) => setFormData({ ...formData, subcategory_id: value })}
+                      disabled={!formData.category_id}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subcategory" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subcategories.map((subcategory) => (
+                          <SelectItem key={subcategory.id} value={subcategory.id}>
+                            {subcategory.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="price" className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4" />
-                      Price (USD) *
+                      Price (BDT) *
                     </Label>
                     <Input
                       id="price"

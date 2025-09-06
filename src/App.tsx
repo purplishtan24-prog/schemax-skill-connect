@@ -14,6 +14,7 @@ import Services from "./pages/Services";
 import CreateService from "./pages/CreateService";
 import BookService from "./pages/BookService";
 import Chat from "./pages/Chat";
+import FreelancerProfile from "./pages/FreelancerProfile";
 import Availability from "./pages/Availability";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/services/new" element={<CreateService />} />
           <Route path="/book/:serviceId" element={<BookService />} />
           <Route path="/chat/:bookingId" element={<Chat />} />
+          <Route path="/freelancer/:freelancerId" element={<FreelancerProfile />} />
           <Route path="/availability" element={<Availability />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

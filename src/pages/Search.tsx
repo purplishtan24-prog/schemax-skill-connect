@@ -74,19 +74,34 @@ export default function Search() {
       params.append('verified_only', 'false');
       params.append('limit', '20');
 
-      // Preserve category filter from URL if present
+      // Preserve category and skills filter from URL if present
       const current = new URLSearchParams(window.location.search);
       const skills = current.get('skills');
+      const category = current.get('category');
       if (skills) params.append('skills', skills);
+      if (category) params.append('category', category);
 
-      const { data, error } = await supabase.functions.invoke(`search-freelancers?${params.toString()}`, {
+      const searchUrl = `https://zdmymcefzmbckohzupgt.supabase.co/functions/v1/search-freelancers?${params.toString()}`;
+      
+      const response = await fetch(searchUrl, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkbXltY2Vmem1iY2tvaHp1cGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2NjA4NjYsImV4cCI6MjA3MjIzNjg2Nn0.X83vHjPN1bq_0MLYnauFo9r3NzGVUBG7fPjE4DN4DbM',
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
 
       if (data?.success) {
         setFreelancers(data.freelancers || []);
+      } else {
+        throw new Error(data?.error || 'Search failed');
       }
     } catch (error: any) {
       toast({
@@ -173,7 +188,7 @@ export default function Search() {
                 <div className="border-t pt-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label>Hourly Rate Range: ${minRate[0]} - ${maxRate[0]}</Label>
+                      <Label>Hourly Rate Range: ৳{minRate[0]} - ৳{maxRate[0]}</Label>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label className="text-xs">Min Rate</Label>
@@ -260,7 +275,7 @@ export default function Search() {
                             {freelancer.hourly_rate && (
                               <div className="font-semibold flex items-center gap-1">
                                 <DollarSign className="w-4 h-4" />
-                                {freelancer.hourly_rate}/hr
+                                ৳{freelancer.hourly_rate}/hr
                               </div>
                             )}
                             {freelancer.review_count > 0 && (
@@ -308,7 +323,7 @@ export default function Search() {
                                 {service.title}
                               </span>
                               <span className="font-medium ml-2">
-                                ${(service.price_cents / 100).toFixed(0)}
+                                ৳{(service.price_cents / 100).toFixed(0)}
                               </span>
                             </div>
                           ))}

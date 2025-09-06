@@ -160,7 +160,7 @@ export default function Services() {
                     </div>
                     <div className="flex items-center gap-1 font-medium text-lg">
                       <DollarSign className="w-4 h-4" />
-                      ${(service.price_cents / 100).toFixed(2)}
+                      ৳{(service.price_cents / 100).toFixed(2)}
                     </div>
                   </div>
 

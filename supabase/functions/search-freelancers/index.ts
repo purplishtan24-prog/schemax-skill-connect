@@ -51,7 +51,7 @@ serve(async (req) => {
       .from("profiles")
       .select(`
         *,
-        freelancer_skills!inner(
+        freelancer_skills(
           skill:skills(id, name)
         ),
         services(
@@ -65,8 +65,7 @@ serve(async (req) => {
         reviews(
           rating,
           comment,
-          created_at,
-          client:profiles!reviews_client_id_fkey(display_name)
+          created_at
         ),
         verifications(
           status

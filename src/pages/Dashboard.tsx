@@ -161,7 +161,7 @@ function ServicesTab({ profile, navigate }: { profile: Profile; navigate: any })
                     {service.description || 'No description'}
                   </p>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>${(service.price_cents / 100).toFixed(2)}</span>
+                    <span>৳{(service.price_cents / 100).toFixed(2)}</span>
                     <span>{service.duration_minutes} minutes</span>
                   </div>
                 </div>

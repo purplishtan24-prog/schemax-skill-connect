@@ -125,6 +125,27 @@ export type Database = {
           },
         ]
       }
+      categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       freelancer_skills: {
         Row: {
           freelancer_id: string
@@ -275,6 +296,7 @@ export type Database = {
       }
       services: {
         Row: {
+          category_id: string | null
           created_at: string
           description: string | null
           duration_minutes: number
@@ -282,10 +304,12 @@ export type Database = {
           id: string
           is_active: boolean
           price_cents: number
+          subcategory_id: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_minutes: number
@@ -293,10 +317,12 @@ export type Database = {
           id?: string
           is_active?: boolean
           price_cents: number
+          subcategory_id?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -304,15 +330,30 @@ export type Database = {
           id?: string
           is_active?: boolean
           price_cents?: number
+          subcategory_id?: string | null
           title?: string
           updated_at?: string
         }
         Relationships: [
           {
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "services_freelancer_id_fkey"
             columns: ["freelancer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "subcategories"
             referencedColumns: ["id"]
           },
         ]
@@ -334,6 +375,35 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      subcategories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -186,7 +186,7 @@ export default function BookService() {
                 </div>
                 <div className="flex items-center gap-1 font-semibold text-lg">
                   <DollarSign className="w-4 h-4" />
-                  <span>${(service.price_cents / 100).toFixed(2)}</span>
+                  <span>৳{(service.price_cents / 100).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -255,7 +255,7 @@ export default function BookService() {
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    <span>Total: ${(service.price_cents / 100).toFixed(2)}</span>
+                    <span>Total: ৳{(service.price_cents / 100).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
