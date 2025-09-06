@@ -60,7 +60,11 @@ export default function Search() {
     setLocation(loc);
     if (min) setMinRate([parseInt(min)]);
     if (max) setMaxRate([parseInt(max)]);
-    searchFreelancers();
+    
+    // Only search if there are actual search parameters
+    if (q || loc || min || max || params.get('skills') || params.get('category')) {
+      searchFreelancers();
+    }
   }, []);
 
   const searchFreelancers = async () => {

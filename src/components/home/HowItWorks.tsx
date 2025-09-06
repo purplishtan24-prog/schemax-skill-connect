@@ -77,8 +77,24 @@ export const HowItWorks = () => {
         <div className="mt-16 p-8 bg-gradient-card rounded-2xl border border-card-border text-center animate-fade-in">
           <h3 className="text-2xl font-bold mb-4">Ready to get started?</h3>
           <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-            Join thousands of satisfied clients who've found their perfect freelancer match on SchemaX.
+            Join thousands of satisfied clients who've found their perfect freelancer match on SchemaX. Our platform connects you with verified professionals from Bangladesh and around the world.
           </p>
+          
+          <div className="grid md:grid-cols-3 gap-6 mb-8 text-left">
+            <div className="p-4 bg-background/50 rounded-lg">
+              <h4 className="font-semibold mb-2 text-primary">🛡️ Secure & Trusted</h4>
+              <p className="text-sm text-muted-foreground">All payments are secured with escrow protection. Pay only when you're 100% satisfied with the work.</p>
+            </div>
+            <div className="p-4 bg-background/50 rounded-lg">
+              <h4 className="font-semibold mb-2 text-accent">⚡ Quick Turnaround</h4>
+              <p className="text-sm text-muted-foreground">Get your projects completed faster with our pool of dedicated freelancers available 24/7.</p>
+            </div>
+            <div className="p-4 bg-background/50 rounded-lg">
+              <h4 className="font-semibold mb-2 text-success">💰 Fair Pricing</h4>
+              <p className="text-sm text-muted-foreground">Competitive rates starting from ৳500. No hidden fees, transparent pricing for all services.</p>
+            </div>
+          </div>
+          
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="px-8 py-3 bg-gradient-hero text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-opacity">
               Post Your Project
