@@ -62,11 +62,6 @@ serve(async (req) => {
           duration_minutes,
           is_active
         ),
-        reviews(
-          rating,
-          comment,
-          created_at
-        ),
         verifications(
           status
         )
@@ -98,10 +93,25 @@ serve(async (req) => {
       throw new Error(`Search failed: ${error.message}`);
     }
 
+    // Fetch reviews separately to avoid relationship conflicts
+    const freelancerIds = freelancers?.map(f => f.id) || [];
+    let reviewsData: any[] = [];
+    
+    if (freelancerIds.length > 0) {
+      const { data: reviews, error: reviewsError } = await supabaseClient
+        .from("reviews")
+        .select("freelancer_id, rating, comment, created_at")
+        .in("freelancer_id", freelancerIds);
+      
+      if (!reviewsError) {
+        reviewsData = reviews || [];
+      }
+    }
+
     // Post-process results to add computed fields and apply additional filters
     const processedFreelancers = freelancers?.map(freelancer => {
-      // Calculate average rating
-      const reviews = freelancer.reviews || [];
+      // Get reviews for this freelancer
+      const reviews = reviewsData.filter(r => r.freelancer_id === freelancer.id);
       const avgRating = reviews.length > 0 
         ? reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviews.length 
         : 0;
@@ -151,6 +161,51 @@ serve(async (req) => {
       return true;
     }) || [];
 
+    // Apply search relevance scoring if search query exists
+    if (filters.search_query) {
+      const searchTerm = filters.search_query.toLowerCase();
+      availableFreelancers.forEach(freelancer => {
+        let relevanceScore = 0;
+        
+        // Title relevance (highest priority)
+        const serviceMatches = freelancer.services?.filter((service: any) => 
+          service.title.toLowerCase().includes(searchTerm)
+        ).length || 0;
+        relevanceScore += serviceMatches * 10;
+        
+        // Name relevance
+        if (freelancer.display_name?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 5;
+        }
+        
+        // Bio relevance
+        if (freelancer.bio?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 2;
+        }
+        
+        freelancer.relevance_score = relevanceScore;
+      });
+      
+      // Sort by relevance first, then by verification and rating
+      availableFreelancers.sort((a, b) => {
+        if (a.relevance_score !== b.relevance_score) {
+          return b.relevance_score - a.relevance_score;
+        }
+        if (a.is_verified !== b.is_verified) {
+          return b.is_verified ? 1 : -1;
+        }
+        return b.avg_rating - a.avg_rating;
+      });
+    } else {
+      // Sort by rating and verification status when no search query
+      availableFreelancers.sort((a, b) => {
+        if (a.is_verified !== b.is_verified) {
+          return b.is_verified ? 1 : -1;
+        }
+        return b.avg_rating - a.avg_rating;
+      });
+    }
+
     // If availability filter is provided, check availability slots
     let availableFreelancers = processedFreelancers;
     if (filters.availability_start && filters.availability_end) {
@@ -173,14 +228,6 @@ serve(async (req) => {
       const results = await Promise.all(availabilityPromises);
       availableFreelancers = results.filter(Boolean);
     }
-
-    // Sort by rating and verification status
-    availableFreelancers.sort((a, b) => {
-      if (a.is_verified !== b.is_verified) {
-        return b.is_verified ? 1 : -1;
-      }
-      return b.avg_rating - a.avg_rating;
-    });
 
     return new Response(JSON.stringify({
       success: true,
