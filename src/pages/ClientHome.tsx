@@ -199,7 +199,12 @@ export default function ClientHome() {
                     <p className="text-sm text-muted-foreground mb-4">
                       ${freelancer.hourly_rate}/hour
                     </p>
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => navigate(`/freelancer/${freelancer.id}`)}
+                    >
                       View Profile
                     </Button>
                   </CardContent>
