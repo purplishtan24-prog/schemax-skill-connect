@@ -68,6 +68,9 @@ export default function Services() {
 
   const loadServices = async () => {
     try {
+      const { data: session } = await supabase.auth.getSession();
+      const currentUserId = session?.session?.user?.id;
+
       const { data, error } = await supabase
         .from('services')
         .select(`
@@ -75,6 +78,7 @@ export default function Services() {
           profiles!services_freelancer_id_fkey(display_name, avatar_url)
         `)
         .eq('is_active', true)
+        .neq('freelancer_id', currentUserId || '') // Exclude user's own services
         .order('created_at', { ascending: false });
 
       if (error) throw error;

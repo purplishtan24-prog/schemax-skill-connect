@@ -62,7 +62,8 @@ export default function FreelancerProfile() {
 
   const loadFreelancer = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select(`
           *,
@@ -77,13 +78,6 @@ export default function FreelancerProfile() {
             duration_minutes,
             is_active
           ),
-          reviews(
-            id,
-            rating,
-            comment,
-            created_at,
-            client_id
-          ),
           verifications(
             status
           )
@@ -93,7 +87,26 @@ export default function FreelancerProfile() {
         .eq('is_public', true)
         .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Fetch reviews separately to avoid relationship conflicts
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select(`
+          id,
+          rating,
+          comment,
+          created_at,
+          client_id
+        `)
+        .eq('freelancer_id', freelancerId);
+
+      if (reviewsError) throw reviewsError;
+
+      const data = {
+        ...profileData,
+        reviews: reviewsData || []
+      };
 
       if (data) {
         // Calculate average rating
