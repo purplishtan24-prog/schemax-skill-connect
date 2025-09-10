@@ -24,6 +24,12 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_ANON_KEY") ?? ""
   );
 
+  // Admin client for privileged operations like sending notifications
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
   try {
     // Get authenticated user
     const authHeader = req.headers.get("Authorization")!;
@@ -34,7 +40,15 @@ serve(async (req) => {
       throw new Error("Authentication required");
     }
 
-    const { freelancer_id, service_id, start_time, end_time, notes }: BookingRequest = await req.json();
+    // Support both direct JSON body and { body: { ... } } shapes, plus camelCase/snake_case
+    const raw = await req.json().catch(() => null as unknown);
+    const body: any = raw && typeof raw === 'object' && 'body' in (raw as any) ? (raw as any).body : raw;
+
+    const freelancer_id = body?.freelancer_id ?? body?.freelancerId;
+    const service_id = body?.service_id ?? body?.serviceId;
+    const start_time = body?.start_time ?? body?.startTime;
+    const end_time = body?.end_time ?? body?.endTime;
+    const notes = body?.notes ?? body?.note ?? null;
 
     // Validate required fields
     if (!freelancer_id || !start_time || !end_time) {
@@ -70,13 +84,14 @@ serve(async (req) => {
       totalAmount = Math.round(service.price_cents * durationHours);
     }
 
-    // Check for conflicting bookings
+    // Check for conflicting bookings (overlap: start < requested end AND end > requested start)
     const { data: conflicts, error: conflictError } = await supabaseClient
       .from("bookings")
       .select("id")
       .eq("freelancer_id", freelancer_id)
       .in("status", ["pending", "confirmed"])
-      .or(`and(start_time.lte.${start_time},end_time.gt.${start_time}),and(start_time.lt.${end_time},end_time.gte.${end_time}),and(start_time.gte.${start_time},end_time.lte.${end_time})`);
+      .lt("start_time", end_time)
+      .gt("end_time", start_time);
 
     if (conflictError) {
       throw new Error("Error checking availability");
@@ -110,8 +125,8 @@ serve(async (req) => {
       throw new Error(`Failed to create booking: ${bookingError.message}`);
     }
 
-    // Create notification for freelancer
-    await supabaseClient
+    // Create notification for freelancer using admin client (bypasses RLS)
+    const { error: notifError } = await supabaseAdmin
       .from("notifications")
       .insert({
         user_id: freelancer_id,
@@ -124,6 +139,10 @@ serve(async (req) => {
           end_time
         }
       });
+
+    if (notifError) {
+      console.error("Failed to create notification:", notifError);
+    }
 
     return new Response(JSON.stringify({
       success: true,

@@ -120,7 +120,10 @@ export default function BookService() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        const serverMsg = (data as any)?.error || (data as any)?.message;
+        throw new Error(serverMsg || error.message);
+      }
 
       toast({
         title: "Booking requested!",
