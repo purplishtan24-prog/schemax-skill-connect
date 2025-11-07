@@ -101,8 +101,8 @@ serve(async (req) => {
       throw new Error("Freelancer is not available during the requested time");
     }
 
-    // Create the booking
-    const { data: booking, error: bookingError } = await supabaseClient
+    // Create the booking using admin client (bypasses RLS after user authentication)
+    const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .insert({
         client_id: userData.user.id,
