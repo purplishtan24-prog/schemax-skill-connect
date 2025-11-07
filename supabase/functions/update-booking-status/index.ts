@@ -22,6 +22,12 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_ANON_KEY") ?? ""
   );
 
+  // Admin client for privileged operations
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
   try {
     // Get authenticated user
     const authHeader = req.headers.get("Authorization")!;
@@ -32,14 +38,25 @@ serve(async (req) => {
       throw new Error("Authentication required");
     }
 
-    const { booking_id, status, notes }: UpdateBookingRequest = await req.json();
+    // Support both direct JSON body and { body: { ... } } shapes
+    const raw = await req.json().catch(() => null as unknown);
+    const body: any = raw && typeof raw === 'object' && 'body' in (raw as any) ? (raw as any).body : raw;
+    
+    let booking_id = body?.booking_id ?? body?.bookingId;
+    let status = body?.status;
+    const notes = body?.notes;
+
+    // Normalize 'rejected' to 'canceled' for database
+    if (status === 'rejected') {
+      status = 'canceled';
+    }
 
     if (!booking_id || !status) {
       throw new Error("booking_id and status are required");
     }
 
-    // Get current booking
-    const { data: currentBooking, error: fetchError } = await supabaseClient
+    // Get current booking using admin client
+    const { data: currentBooking, error: fetchError } = await supabaseAdmin
       .from("bookings")
       .select(`
         *,
@@ -51,6 +68,7 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !currentBooking) {
+      console.error("Booking fetch error:", fetchError);
       throw new Error("Booking not found");
     }
 
@@ -84,7 +102,7 @@ serve(async (req) => {
       throw new Error("Booking must be confirmed before marking as completed");
     }
 
-    // Update booking
+    // Update booking using admin client
     const updateData: any = { 
       status,
       updated_at: new Date().toISOString()
@@ -94,7 +112,7 @@ serve(async (req) => {
       updateData.notes = notes;
     }
 
-    const { data: updatedBooking, error: updateError } = await supabaseClient
+    const { data: updatedBooking, error: updateError } = await supabaseAdmin
       .from("bookings")
       .update(updateData)
       .eq("id", booking_id)
@@ -107,16 +125,17 @@ serve(async (req) => {
       .single();
 
     if (updateError) {
+      console.error("Booking update error:", updateError);
       throw new Error(`Failed to update booking: ${updateError.message}`);
     }
 
-    // Create notifications
+    // Create notifications using admin client
     const notificationPromises = [];
     
     if (isFreelancer) {
       // Notify client
       notificationPromises.push(
-        supabaseClient.from("notifications").insert({
+        supabaseAdmin.from("notifications").insert({
           user_id: currentBooking.client_id,
           type: `booking_${status}`,
           payload: {
@@ -132,7 +151,7 @@ serve(async (req) => {
     } else {
       // Notify freelancer
       notificationPromises.push(
-        supabaseClient.from("notifications").insert({
+        supabaseAdmin.from("notifications").insert({
           user_id: currentBooking.freelancer_id,
           type: `booking_${status}`,
           payload: {
