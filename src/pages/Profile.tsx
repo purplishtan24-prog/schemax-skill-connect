@@ -11,7 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navigation } from "@/components/layout/Navigation";
-import { ArrowLeft, Upload, User, DollarSign, MapPin, FileText, Shield } from "lucide-react";
+import { ArrowLeft, Upload, User, DollarSign, MapPin, FileText, Shield, Calendar, Clock } from "lucide-react";
+import { format } from "date-fns";
 
 interface Profile {
   id: string;
@@ -24,8 +25,25 @@ interface Profile {
   is_public: boolean;
 }
 
+interface Booking {
+  id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  service: {
+    title: string;
+  } | null;
+  client: {
+    display_name: string;
+  } | null;
+  freelancer: {
+    display_name: string;
+  } | null;
+}
+
 export default function Profile() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -49,6 +67,7 @@ export default function Profile() {
       }
 
       await loadProfile(session.user.id);
+      await loadBookings(session.user.id);
     };
 
     checkAuth();
@@ -85,6 +104,31 @@ export default function Profile() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBookings = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          start_time,
+          end_time,
+          status,
+          service:services(title),
+          client:profiles!bookings_client_id_fkey(display_name),
+          freelancer:profiles!bookings_freelancer_id_fkey(display_name)
+        `)
+        .or(`client_id.eq.${userId},freelancer_id.eq.${userId}`)
+        .eq('status', 'confirmed')
+        .order('start_time', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setBookings(data || []);
+    } catch (error: any) {
+      console.error('Error loading bookings:', error);
     }
   };
 
@@ -349,6 +393,56 @@ export default function Profile() {
                       }
                     />
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Bookings */}
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Recent Confirmed Bookings
+                  </CardTitle>
+                  <CardDescription>
+                    Your latest accepted bookings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {bookings.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No confirmed bookings yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {bookings.map((booking) => (
+                        <div key={booking.id} className="p-3 border rounded-lg space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium">{booking.service?.title || 'Custom Booking'}</h4>
+                            <Badge variant="default">Confirmed</Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <div className="flex items-center gap-2">
+                              <User className="w-3 h-3" />
+                              <span>
+                                {profile?.role === 'freelancer' 
+                                  ? `Client: ${booking.client?.display_name}`
+                                  : `Freelancer: ${booking.freelancer?.display_name}`
+                                }
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-3 h-3" />
+                              <span>
+                                {format(new Date(booking.start_time), 'MMM d, yyyy h:mm a')} - 
+                                {format(new Date(booking.end_time), 'h:mm a')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

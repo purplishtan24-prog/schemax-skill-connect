@@ -88,6 +88,18 @@ serve(async (req) => {
       canceled: []
     };
 
+    // If already in the desired status, return success without error
+    if (currentBooking.status === status) {
+      return new Response(JSON.stringify({
+        success: true,
+        booking: currentBooking,
+        message: `Booking is already ${status}`
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     if (!validTransitions[currentBooking.status]?.includes(status)) {
       throw new Error(`Cannot change status from ${currentBooking.status} to ${status}`);
     }
