@@ -108,16 +108,21 @@ export function NotificationBell() {
 
   const handleBookingResponse = async (notificationId: string, bookingId: string, status: 'confirmed' | 'rejected') => {
     try {
-      const { error } = await supabase.functions.invoke('update-booking-status', {
+      const { data, error } = await supabase.functions.invoke('update-booking-status', {
         body: {
           booking_id: bookingId,
           status,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        const serverMsg = (data as any)?.error || (data as any)?.message;
+        throw new Error(serverMsg || error.message);
+      }
 
-      await markAsRead(notificationId);
+      // Remove the notification from the UI
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setUnreadCount(prev => Math.max(0, prev - 1));
       
       toast({
         title: status === 'confirmed' ? "Booking Confirmed" : "Booking Rejected",
