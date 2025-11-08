@@ -50,7 +50,8 @@ export default function BookService() {
 
     getUser();
 
-    if (!service && serviceId) {
+    // Always load service to ensure we have complete data including freelancer_id
+    if (serviceId && (!service || !service.freelancer_id)) {
       loadService();
     }
   }, [serviceId, service, navigate]);
@@ -99,6 +100,15 @@ export default function BookService() {
       toast({
         title: "Missing information",
         description: "Please select a date and time for your booking.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!service.freelancer_id) {
+      toast({
+        title: "Error",
+        description: "Service information is incomplete. Please try again.",
         variant: "destructive",
       });
       return;
