@@ -40,9 +40,8 @@ serve(async (req) => {
       throw new Error("Authentication required");
     }
 
-    // Support both direct JSON body and { body: { ... } } shapes, plus camelCase/snake_case
-    const raw = await req.json().catch(() => null as unknown);
-    const body: any = raw && typeof raw === 'object' && 'body' in (raw as any) ? (raw as any).body : raw;
+    // Parse request body - supabase.functions.invoke sends body directly
+    const body = await req.json();
 
     const freelancer_id = body?.freelancer_id ?? body?.freelancerId;
     const service_id = body?.service_id ?? body?.serviceId;
