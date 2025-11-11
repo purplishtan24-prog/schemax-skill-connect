@@ -142,13 +142,11 @@ export default function Profile() {
         bio: formData.bio || null,
         location: formData.location || null,
         is_public: formData.is_public,
-        role: formData.role,
+        // Role is not included - it cannot be changed after creation
       };
 
-      if (formData.role === 'freelancer' && formData.hourly_rate) {
+      if (profile.role === 'freelancer' && formData.hourly_rate) {
         updateData.hourly_rate = parseInt(formData.hourly_rate);
-      } else if (formData.role === 'client') {
-        updateData.hourly_rate = null;
       }
 
       const { error } = await supabase
@@ -332,10 +330,10 @@ export default function Profile() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="w-5 h-5" />
-                    Role & Visibility
+                    Account & Visibility
                   </CardTitle>
                   <CardDescription>
-                    Change your role and control who can see your profile
+                    Manage your account settings and visibility
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -343,26 +341,15 @@ export default function Profile() {
                     <div className="space-y-1">
                       <Label>Account Type</Label>
                       <p className="text-sm text-muted-foreground">
-                        Switch between client and freelancer roles
+                        Your role is set permanently
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={formData.role === 'client' ? 'default' : 'secondary'}>
-                        Client
-                      </Badge>
-                      <Switch
-                        checked={formData.role === 'freelancer'}
-                        onCheckedChange={(checked) => 
-                          setFormData({ ...formData, role: checked ? 'freelancer' : 'client' })
-                        }
-                      />
-                      <Badge variant={formData.role === 'freelancer' ? 'default' : 'secondary'}>
-                        Freelancer
-                      </Badge>
-                    </div>
+                    <Badge variant="default" className="text-lg px-4 py-2">
+                      {profile.role === 'freelancer' ? 'Freelancer' : 'Client'}
+                    </Badge>
                   </div>
 
-                  {formData.role === 'freelancer' && (
+                  {profile.role === 'freelancer' && (
                     <div className="space-y-2">
                       <Label htmlFor="hourly_rate" className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4" />

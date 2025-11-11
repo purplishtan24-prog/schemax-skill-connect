@@ -79,18 +79,31 @@ export const Navigation = () => {
             <button onClick={() => navigate('/home')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
               Home
             </button>
-            <button onClick={() => navigate('/services')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
-              Services
-            </button>
-            <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
-              Find Freelancers
-            </button>
-            <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
-              Categories
-            </button>
-            <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} className="text-sm font-medium hover:text-primary transition-colors" role="link">
-              How it Works
-            </button>
+            {profile?.role === 'freelancer' ? (
+              <>
+                <button onClick={() => navigate('/services/new')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                  Create Service
+                </button>
+                <button onClick={() => navigate('/availability')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                  Availability
+                </button>
+                <button onClick={() => navigate('/dashboard')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                  My Bookings
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => navigate('/services')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                  Browse Services
+                </button>
+                <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                  Find Freelancers
+                </button>
+                <button onClick={() => navigate('/dashboard')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                  My Bookings
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -129,10 +142,28 @@ export const Navigation = () => {
                     Profile Settings
                   </DropdownMenuItem>
                   {profile?.role === 'freelancer' && (
-                    <DropdownMenuItem onClick={() => navigate('/services')}>
-                      <User className="mr-2 h-4 w-4" />
-                      My Services
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/services/new')}>
+                        <User className="mr-2 h-4 w-4" />
+                        Create Service
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/availability')}>
+                        <User className="mr-2 h-4 w-4" />
+                        Manage Availability
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {profile?.role === 'client' && (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/services')}>
+                        <Search className="mr-2 h-4 w-4" />
+                        Browse Services
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/search')}>
+                        <Search className="mr-2 h-4 w-4" />
+                        Find Freelancers
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
@@ -170,18 +201,25 @@ export const Navigation = () => {
             <button onClick={() => navigate('/home')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
               Home
             </button>
-            <button onClick={() => navigate('/services')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
-              Services
-            </button>
-            <button onClick={() => navigate('/search')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
-              Find Freelancers
-            </button>
-            <button onClick={() => navigate('/search')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
-              Categories
-            </button>
-            <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
-              How it Works
-            </button>
+            {profile?.role === 'freelancer' ? (
+              <>
+                <button onClick={() => navigate('/services/new')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
+                  Create Service
+                </button>
+                <button onClick={() => navigate('/availability')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
+                  Availability
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => navigate('/services')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
+                  Browse Services
+                </button>
+                <button onClick={() => navigate('/search')} className="block text-sm font-medium hover:text-primary transition-colors text-left" role="link">
+                  Find Freelancers
+                </button>
+              </>
+            )}
             <div className="pt-3 space-y-2">
               {user ? (
                 <>
@@ -191,6 +229,11 @@ export const Navigation = () => {
                   <Button variant="outline" className="w-full" onClick={() => navigate('/profile')}>
                     Profile Settings
                   </Button>
+                  {profile?.role === 'freelancer' && (
+                    <Button variant="outline" className="w-full" onClick={() => navigate('/services/new')}>
+                      Create Service
+                    </Button>
+                  )}
                   <Button variant="outline" className="w-full" onClick={handleSignOut}>
                     Sign Out
                   </Button>
