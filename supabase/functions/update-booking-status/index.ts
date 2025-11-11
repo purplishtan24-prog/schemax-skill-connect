@@ -141,6 +141,20 @@ serve(async (req) => {
       throw new Error(`Failed to update booking: ${updateError.message}`);
     }
 
+    // Delete the original booking_request notification for the freelancer if they responded
+    if (isFreelancer && (status === 'confirmed' || status === 'canceled')) {
+      const { error: deleteError } = await supabaseAdmin
+        .from('notifications')
+        .delete()
+        .eq('user_id', currentBooking.freelancer_id)
+        .eq('type', 'booking_request')
+        .contains('payload', { booking_id });
+      
+      if (deleteError) {
+        console.error('Error deleting notification:', deleteError);
+      }
+    }
+
     // Create notifications using admin client
     const notificationPromises = [];
     

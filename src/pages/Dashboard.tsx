@@ -176,9 +176,9 @@ function ServicesTab({ profile, navigate }: { profile: Profile; navigate: any })
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate('/services')}
+                    onClick={() => navigate('/availability')}
                   >
-                    Manage
+                    Availability
                   </Button>
                 </div>
               </div>
