@@ -12,6 +12,7 @@ import Search from "./pages/Search";
 import Profile from "./pages/Profile";
 import Services from "./pages/Services";
 import CreateService from "./pages/CreateService";
+import EditService from "./pages/EditService";
 import BookService from "./pages/BookService";
 import Chat from "./pages/Chat";
 import FreelancerProfile from "./pages/FreelancerProfile";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/new" element={<CreateService />} />
+          <Route path="/services/edit/:id" element={<EditService />} />
           <Route path="/book/:serviceId" element={<BookService />} />
           <Route path="/chat/:bookingId" element={<Chat />} />
           <Route path="/freelancer/:freelancerId" element={<FreelancerProfile />} />

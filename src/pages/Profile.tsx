@@ -122,7 +122,8 @@ export default function Profile() {
         `)
         .or(`client_id.eq.${userId},freelancer_id.eq.${userId}`)
         .eq('status', 'confirmed')
-        .order('start_time', { ascending: false })
+        .gte('start_time', new Date().toISOString())
+        .order('start_time', { ascending: true })
         .limit(5);
 
       if (error) throw error;
@@ -388,10 +389,10 @@ export default function Profile() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
-                    Recent Confirmed Bookings
+                    Upcoming Confirmed Bookings
                   </CardTitle>
                   <CardDescription>
-                    Your latest accepted bookings
+                    Your upcoming accepted bookings
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

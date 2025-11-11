@@ -14,6 +14,7 @@ interface Service {
   description: string;
   price: number;
   status: 'active' | 'paused' | 'draft';
+  orderCount?: number;
 }
 
 interface Profile {
@@ -70,14 +71,26 @@ export default function FreelancerHome() {
           .limit(6);
 
         if (data) {
-          const mappedServices = data.map(service => ({
-            id: service.id,
-            title: service.title,
-            description: service.description || '',
-            price: service.price_cents / 100,
-            status: (service.is_active ? 'active' : 'paused') as 'active' | 'paused' | 'draft'
-          }));
-          setServices(mappedServices);
+          // Load booking counts for each service
+          const servicesWithCounts = await Promise.all(
+            data.map(async (service) => {
+              const { count } = await supabase
+                .from('bookings')
+                .select('*', { count: 'exact', head: true })
+                .eq('service_id', service.id)
+                .eq('status', 'confirmed');
+
+              return {
+                id: service.id,
+                title: service.title,
+                description: service.description || '',
+                price: service.price_cents / 100,
+                status: (service.is_active ? 'active' : 'paused') as 'active' | 'paused' | 'draft',
+                orderCount: count || 0
+              };
+            })
+          );
+          setServices(servicesWithCounts);
         }
       }
     } catch (error) {
@@ -260,7 +273,7 @@ export default function FreelancerHome() {
                         <span className="font-semibold text-lg">${service.price}</span>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Clock className="w-4 h-4 mr-1" />
-                          0 orders
+                          {service.orderCount || 0} orders
                         </div>
                       </div>
                     </CardContent>

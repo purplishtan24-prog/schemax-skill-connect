@@ -94,6 +94,34 @@ function ServicesTab({ profile, navigate }: { profile: Profile; navigate: any })
     }
   };
 
+  const handleDeleteService = async (serviceId: string) => {
+    if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', serviceId);
+
+      if (error) throw error;
+
+      setServices(services.filter(service => service.id !== serviceId));
+
+      toast({
+        title: "Service deleted",
+        description: "Service has been deleted successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error deleting service",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (profile.role === 'client') {
     return (
       <Card className="shadow-card">
@@ -169,16 +197,23 @@ function ServicesTab({ profile, navigate }: { profile: Profile; navigate: any })
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => toggleServiceStatus(service.id, service.is_active)}
+                    onClick={() => navigate(`/services/edit/${service.id}`)}
                   >
-                    {service.is_active ? 'Deactivate' : 'Activate'}
+                    Edit
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate('/availability')}
+                    onClick={() => handleDeleteService(service.id)}
                   >
-                    Availability
+                    Delete
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleServiceStatus(service.id, service.is_active)}
+                  >
+                    {service.is_active ? 'Deactivate' : 'Activate'}
                   </Button>
                 </div>
               </div>
