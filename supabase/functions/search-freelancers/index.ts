@@ -161,6 +161,31 @@ serve(async (req) => {
       return true;
     }) || [];
 
+    // Initialize available freelancers with processed results
+    let availableFreelancers = processedFreelancers;
+
+    // If availability filter is provided, check availability slots
+    if (filters.availability_start && filters.availability_end) {
+      const availabilityPromises = processedFreelancers.map(async (freelancer) => {
+        const { data: slots, error: slotError } = await supabaseClient
+          .from("availability_slots")
+          .select("*")
+          .eq("freelancer_id", freelancer.id)
+          .eq("is_booked", false)
+          .gte("start_time", filters.availability_start)
+          .lte("end_time", filters.availability_end);
+
+        if (slotError || !slots || slots.length === 0) {
+          return null;
+        }
+
+        return { ...freelancer, available_slots: slots };
+      });
+
+      const results = await Promise.all(availabilityPromises);
+      availableFreelancers = results.filter(Boolean);
+    }
+
     // Apply search relevance scoring if search query exists
     if (filters.search_query) {
       const searchTerm = filters.search_query.toLowerCase();
@@ -204,29 +229,6 @@ serve(async (req) => {
         }
         return b.avg_rating - a.avg_rating;
       });
-    }
-
-    // If availability filter is provided, check availability slots
-    let availableFreelancers = processedFreelancers;
-    if (filters.availability_start && filters.availability_end) {
-      const availabilityPromises = processedFreelancers.map(async (freelancer) => {
-        const { data: slots, error: slotError } = await supabaseClient
-          .from("availability_slots")
-          .select("*")
-          .eq("freelancer_id", freelancer.id)
-          .eq("is_booked", false)
-          .gte("start_time", filters.availability_start)
-          .lte("end_time", filters.availability_end);
-
-        if (slotError || !slots || slots.length === 0) {
-          return null;
-        }
-
-        return { ...freelancer, available_slots: slots };
-      });
-
-      const results = await Promise.all(availabilityPromises);
-      availableFreelancers = results.filter(Boolean);
     }
 
     return new Response(JSON.stringify({
