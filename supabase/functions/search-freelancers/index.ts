@@ -46,7 +46,7 @@ serve(async (req) => {
       offset: parseInt(url.searchParams.get("offset") || "0")
     };
 
-    // Build the base query for freelancers
+    // Build the base query for freelancers (don't filter by search_query yet)
     let query = supabaseClient
       .from("profiles")
       .select(`
@@ -69,11 +69,7 @@ serve(async (req) => {
       .eq("role", "freelancer")
       .eq("is_public", true);
 
-    // Apply filters
-    if (filters.search_query) {
-      query = query.or(`display_name.ilike.%${filters.search_query}%,bio.ilike.%${filters.search_query}%`);
-    }
-
+    // Apply non-text filters
     if (filters.location) {
       query = query.ilike("location", `%${filters.location}%`);
     }
@@ -136,6 +132,21 @@ serve(async (req) => {
       };
     }).filter(freelancer => {
       // Apply post-processing filters
+      
+      // Search query filter (check name, bio, and service titles)
+      if (filters.search_query) {
+        const searchTerm = filters.search_query.toLowerCase();
+        const nameMatch = freelancer.display_name?.toLowerCase().includes(searchTerm);
+        const bioMatch = freelancer.bio?.toLowerCase().includes(searchTerm);
+        const serviceMatch = freelancer.services?.some((service: any) => 
+          service.title?.toLowerCase().includes(searchTerm) ||
+          service.description?.toLowerCase().includes(searchTerm)
+        );
+        
+        if (!nameMatch && !bioMatch && !serviceMatch) {
+          return false;
+        }
+      }
       
       // Rating filter
       if (filters.rating_min && freelancer.avg_rating < filters.rating_min) {
