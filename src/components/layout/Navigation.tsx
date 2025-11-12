@@ -87,7 +87,7 @@ export const Navigation = () => {
                 <button onClick={() => navigate('/availability')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
                   Availability
                 </button>
-                <button onClick={() => navigate('/dashboard')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                <button onClick={() => navigate('/dashboard?tab=bookings')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
                   My Bookings
                 </button>
               </>
@@ -99,7 +99,7 @@ export const Navigation = () => {
                 <button onClick={() => navigate('/search')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
                   Find Freelancers
                 </button>
-                <button onClick={() => navigate('/dashboard')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
+                <button onClick={() => navigate('/dashboard?tab=bookings')} className="text-sm font-medium hover:text-primary transition-colors" role="link">
                   My Bookings
                 </button>
               </>

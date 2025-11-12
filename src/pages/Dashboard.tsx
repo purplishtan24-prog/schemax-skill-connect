@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,200 @@ interface Service {
   duration_minutes: number;
   is_active: boolean;
   created_at: string;
+}
+
+// Bookings Tab Component
+function BookingsTab({ profile }: { profile: Profile }) {
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    loadBookings();
+  }, [profile]);
+
+  const loadBookings = async () => {
+    try {
+      let query = supabase
+        .from('bookings')
+        .select(`
+          *,
+          service:services(
+            id,
+            title,
+            price_cents,
+            duration_minutes,
+            freelancer:profiles!services_freelancer_id_fkey(
+              id,
+              display_name,
+              avatar_url
+            )
+          ),
+          client:profiles!bookings_client_id_fkey(
+            id,
+            display_name,
+            avatar_url
+          )
+        `)
+        .order('start_time', { ascending: false });
+
+      // Filter based on role
+      if (profile.role === 'freelancer') {
+        // For freelancers, get bookings for their services
+        const { data: services } = await supabase
+          .from('services')
+          .select('id')
+          .eq('freelancer_id', profile.id);
+        
+        const serviceIds = services?.map(s => s.id) || [];
+        if (serviceIds.length > 0) {
+          query = query.in('service_id', serviceIds);
+        } else {
+          setBookings([]);
+          setLoading(false);
+          return;
+        }
+      } else {
+        // For clients, get their bookings
+        query = query.eq('client_id', profile.id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setBookings(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading bookings",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'completed':
+        return 'outline';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card className="shadow-card">
+        <CardContent className="pt-6">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading bookings...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader>
+        <CardTitle>
+          {profile.role === 'freelancer' ? 'My Bookings' : 'Booked Services'}
+        </CardTitle>
+        <CardDescription>
+          {profile.role === 'freelancer' 
+            ? "Manage your client bookings"
+            : "Track your hired freelancers"
+          }
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {bookings.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No bookings yet</p>
+            <p className="text-sm">
+              {profile.role === 'freelancer' 
+                ? "Create services to start receiving bookings"
+                : "Browse freelancers to make your first booking"
+              }
+            </p>
+            {profile.role === 'client' && (
+              <Button 
+                className="mt-4"
+                onClick={() => navigate('/search')}
+              >
+                Find Freelancers
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {bookings.map((booking) => (
+              <div key={booking.id} className="flex items-start gap-4 p-4 border rounded-lg">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage 
+                    src={profile.role === 'freelancer' 
+                      ? booking.client?.avatar_url 
+                      : booking.service?.freelancer?.avatar_url
+                    } 
+                  />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {profile.role === 'freelancer'
+                      ? booking.client?.display_name?.charAt(0).toUpperCase()
+                      : booking.service?.freelancer?.display_name?.charAt(0).toUpperCase()
+                    }
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-medium">{booking.service?.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {profile.role === 'freelancer' 
+                          ? `with ${booking.client?.display_name}`
+                          : `with ${booking.service?.freelancer?.display_name}`
+                        }
+                      </p>
+                    </div>
+                    <Badge variant={getStatusColor(booking.status)}>
+                      {booking.status}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(booking.start_time).toLocaleDateString()}
+                    </span>
+                    <span>
+                      {new Date(booking.start_time).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                    <span>৳{(booking.service?.price_cents / 100).toFixed(2)}</span>
+                  </div>
+                  {booking.notes && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Note: {booking.notes}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 // Services Tab Component
@@ -239,8 +433,11 @@ interface Profile {
 export default function Dashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  const defaultTab = searchParams.get('tab') || 'overview';
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -409,7 +606,7 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <Tabs defaultValue="overview" className="space-y-6">
+            <Tabs defaultValue={defaultTab} className="space-y-6">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="bookings">Bookings</TabsTrigger>
@@ -514,29 +711,7 @@ export default function Dashboard() {
               </TabsContent>
 
               <TabsContent value="bookings" className="space-y-6">
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle>Recent Bookings</CardTitle>
-                    <CardDescription>
-                      {profile.role === 'freelancer' 
-                        ? "Manage your client bookings"
-                        : "Track your hired freelancers"
-                      }
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No bookings yet</p>
-                      <p className="text-sm">
-                        {profile.role === 'freelancer' 
-                          ? "Create services to start receiving bookings"
-                          : "Browse freelancers to make your first booking"
-                        }
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <BookingsTab profile={profile} />
               </TabsContent>
 
               <TabsContent value="services" className="space-y-6">
