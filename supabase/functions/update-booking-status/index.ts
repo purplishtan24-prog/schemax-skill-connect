@@ -143,15 +143,28 @@ serve(async (req) => {
 
     // Delete the original booking_request notification for the freelancer if they responded
     if (isFreelancer && (status === 'confirmed' || status === 'canceled')) {
-      const { error: deleteError } = await supabaseAdmin
+      // Fetch and delete all booking_request notifications for this booking
+      const { data: notificationsToDelete, error: fetchNotifError } = await supabaseAdmin
         .from('notifications')
-        .delete()
+        .select('id, payload')
         .eq('user_id', currentBooking.freelancer_id)
-        .eq('type', 'booking_request')
-        .contains('payload', { booking_id });
+        .eq('type', 'booking_request');
       
-      if (deleteError) {
-        console.error('Error deleting notification:', deleteError);
+      if (!fetchNotifError && notificationsToDelete) {
+        const notificationIdsToDelete = notificationsToDelete
+          .filter(n => n.payload?.booking_id === booking_id)
+          .map(n => n.id);
+        
+        if (notificationIdsToDelete.length > 0) {
+          const { error: deleteError } = await supabaseAdmin
+            .from('notifications')
+            .delete()
+            .in('id', notificationIdsToDelete);
+          
+          if (deleteError) {
+            console.error('Error deleting notification:', deleteError);
+          }
+        }
       }
     }
 
