@@ -124,7 +124,7 @@ export const FeaturedFreelancers = () => {
 
                 <div className="flex items-center justify-between pt-4 border-t border-border">
                   <div>
-                    <div className="text-2xl font-bold text-primary">${freelancer.hourlyRate}</div>
+                    <div className="text-2xl font-bold text-primary">৳{freelancer.hourlyRate}</div>
                     <div className="text-sm text-muted-foreground">per hour</div>
                   </div>
                   

@@ -127,7 +127,7 @@ export default function ClientHome() {
               <DollarSign className="h-8 w-8 text-primary" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Total Spent</p>
-                <p className="text-2xl font-bold">$0</p>
+                <p className="text-2xl font-bold">৳0</p>
               </div>
             </CardContent>
           </Card>
@@ -197,7 +197,7 @@ export default function ClientHome() {
                       ))}
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
-                      ${freelancer.hourly_rate}/hour
+                      ৳{freelancer.hourly_rate}/hour
                     </p>
                     <Button 
                       variant="outline" 

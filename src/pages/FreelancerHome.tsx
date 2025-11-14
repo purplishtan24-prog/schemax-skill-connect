@@ -175,7 +175,7 @@ export default function FreelancerHome() {
               <DollarSign className="h-8 w-8 text-primary" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
-                <p className="text-2xl font-bold">${stats.totalEarnings}</p>
+                <p className="text-2xl font-bold">৳{stats.totalEarnings}</p>
               </div>
             </CardContent>
           </Card>
@@ -270,7 +270,7 @@ export default function FreelancerHome() {
                         {service.description}
                       </p>
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-lg">${service.price}</span>
+                        <span className="font-semibold text-lg">৳{service.price}</span>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Clock className="w-4 h-4 mr-1" />
                           {service.orderCount || 0} orders

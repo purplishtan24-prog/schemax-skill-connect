@@ -221,7 +221,7 @@ export default function CreateService() {
                   <div className="space-y-2">
                     <Label htmlFor="price" className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4" />
-                      Price (BDT) *
+                      Price (Taka) *
                     </Label>
                     <Input
                       id="price"
