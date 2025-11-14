@@ -561,7 +561,7 @@ export default function Dashboard() {
                 )}
                 {profile.hourly_rate && (
                   <div className="text-sm">
-                    💰 ${profile.hourly_rate}/hour
+                    💰 ৳{profile.hourly_rate}/hour
                   </div>
                 )}
                 {profile.bio && (
@@ -642,7 +642,7 @@ export default function Dashboard() {
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">$0</div>
+                      <div className="text-2xl font-bold">৳0</div>
                       <p className="text-xs text-muted-foreground">
                         {profile.role === 'freelancer' ? 'Total earnings' : 'Total spent'}
                       </p>
